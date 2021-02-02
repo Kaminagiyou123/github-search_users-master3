@@ -24,13 +24,17 @@ const searchGithubUser=async(user)=>{
     const response= await axios.get(`${rootUrl}/users/${user}`).catch(error=>console.log(error))
 if (response)
    { setGithubUser(response.data)
-    const {login,followers_url}=response.data
-    axios(`${rootUrl}/users/${login}/repos?per_page=100`).then(
-        response=> setRepos(response.data)
-    )
-    axios(`${followers_url}?per_page=100`).then(
-        response=> setFollowers(response.data)
-    )
+    const {login,followers_url}=response.data;
+
+    await Promise.allSettled([axios(`${rootUrl}/users/${login}/repos?per_page=100`),
+    axios(`${followers_url}?per_page=100`)
+    ]).then ((results)=>{
+        const[repos,followers]=results;
+        const status='fulfilled';
+        if (repos.status===status){setRepos(repos.value.data)};
+        if (followers.status===status){setFollowers(followers.value.data)};
+      
+    })
    //https://api.github.com/users/john-smilga/repos?per_page=100
    //https://api.github.com/users/john-smilga/followers
 
